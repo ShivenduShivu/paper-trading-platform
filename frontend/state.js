@@ -1,8 +1,10 @@
 export const state = {
   balance: 10000,
   position: null,
-  price: 0
+  price: 0,
+  tradeHistory: []
 };
+
 
 export function saveState() {
   localStorage.setItem("paper_state", JSON.stringify(state));
