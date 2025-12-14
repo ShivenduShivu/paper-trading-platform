@@ -1,3 +1,5 @@
+import { ensureRSIChart } from "./rsi.js";
+import { ema9Series, ema21Series } from "./chart.js";
 import { initChart } from "./chart.js";
 import { updateCandle } from "./candles.js";
 import { state, saveState, loadState } from "./state.js";
@@ -14,6 +16,9 @@ const balanceDiv = document.getElementById("balance");
 const buyBtn = document.getElementById("buy");
 const sellBtn = document.getElementById("sell");
 const historyDiv = document.getElementById("history");
+const emaToggle = document.getElementById("emaToggle");
+const rsiToggle = document.getElementById("rsiToggle");
+const rsiChartDiv = document.getElementById("rsiChart");
 
 
 
@@ -89,3 +94,26 @@ sellBtn.onclick = () => {
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js");
 }
+
+// EMA toggle
+emaToggle.onchange = () => {
+  const visible = emaToggle.checked;
+  ema9Series.applyOptions({ visible });
+  ema21Series.applyOptions({ visible });
+};
+
+// RSI toggle
+rsiToggle.onchange = () => {
+  if (rsiToggle.checked) {
+    rsiChartDiv.style.display = "block";
+    ensureRSIChart(); // RSI chart created ONLY now
+  } else {
+    rsiChartDiv.style.display = "none";
+  }
+};
+
+// default
+rsiChartDiv.style.display = "none";
+
+
+

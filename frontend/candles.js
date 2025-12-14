@@ -1,3 +1,4 @@
+import { rsiSeries } from "./rsi.js";
 import {
   candleSeries,
   ema9Series,
@@ -8,6 +9,40 @@ let currentCandle = null;
 let closes = [];
 let ema9 = null;
 let ema21 = null;
+let gains = [];
+let losses = [];
+let prevClose = null;
+
+function calculateRSI(close, period = 14) {
+  if (prevClose === null) {
+    prevClose = close;
+    return null;
+  }
+
+  const change = close - prevClose;
+  prevClose = close;
+
+  gains.push(Math.max(0, change));
+  losses.push(Math.max(0, -change));
+
+  if (gains.length > period) {
+    gains.shift();
+    losses.shift();
+  }
+
+  if (gains.length < period) return null;
+
+  const avgGain =
+    gains.reduce((a, b) => a + b, 0) / period;
+  const avgLoss =
+    losses.reduce((a, b) => a + b, 0) / period;
+
+  if (avgLoss === 0) return 100;
+
+  const rs = avgGain / avgLoss;
+  return 100 - 100 / (1 + rs);
+}
+
 
 function calculateEMA(price, prevEMA, period) {
   const k = 2 / (period + 1);
@@ -28,6 +63,11 @@ export function updateCandle(price) {
       low: price,
       close: price
     };
+
+    const rsi = calculateRSI(price);
+    if (rsi !== null && rsiSeries !== null) {
+        rsiSeries.update({ time: candleTime, value: rsi });
+    }
 
     candleSeries.update(currentCandle);
 
