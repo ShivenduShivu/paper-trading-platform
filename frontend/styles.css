@@ -1,0 +1,20 @@
+body {
+  background: #0e1117;
+  color: white;
+  font-family: Arial;
+}
+
+#chart {
+  height: 300px;
+  margin: 20px 0;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  padding: 10px;
+  font-size: 16px;
+}

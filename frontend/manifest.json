@@ -1,0 +1,9 @@
+{
+  "name": "Paper Trading Platform",
+  "short_name": "PaperTrade",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0e1117",
+  "theme_color": "#0e1117",
+  "icons": []
+}
