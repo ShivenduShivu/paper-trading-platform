@@ -4,6 +4,9 @@ import { initChart } from "./chart.js";
 import { updateCandle } from "./candles.js";
 import { state, saveState, loadState } from "./state.js";
 import { buyAtMarket, sellAtMarket } from "./trading.js";
+import { vwapSeries } from "./chart.js";
+import { ensureMACDChart, updateMACD } from "./macd.js";
+
 
 
 // restore saved state
@@ -19,6 +22,10 @@ const historyDiv = document.getElementById("history");
 const emaToggle = document.getElementById("emaToggle");
 const rsiToggle = document.getElementById("rsiToggle");
 const rsiChartDiv = document.getElementById("rsiChart");
+const vwapToggle = document.getElementById("vwapToggle");
+const macdToggle = document.getElementById("macdToggle");
+const macdChartDiv = document.getElementById("macdChart");
+
 
 
 
@@ -71,10 +78,22 @@ const ws = new WebSocket(
 
 ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    state.price = Number(data.p);
-    updateCandle(state.price);
+    const price = Number(data.p);
+    const volume = Number(data.q || 1);
+
+    state.price = price;
+    updateCandle(price, volume);
+
+    const now = Math.floor(Date.now() / 1000);
+    const candleTime = now - (now % 60);
+
+    if (macdToggle.checked) {
+        updateMACD(price, candleTime);
+    }
+
     render();
 };
+
 
 // BUY BUTTON
 buyBtn.onclick = () => {
@@ -97,23 +116,37 @@ if ("serviceWorker" in navigator) {
 
 // EMA toggle
 emaToggle.onchange = () => {
-  const visible = emaToggle.checked;
-  ema9Series.applyOptions({ visible });
-  ema21Series.applyOptions({ visible });
+    const visible = emaToggle.checked;
+    ema9Series.applyOptions({ visible });
+    ema21Series.applyOptions({ visible });
 };
 
 // RSI toggle
 rsiToggle.onchange = () => {
-  if (rsiToggle.checked) {
-    rsiChartDiv.style.display = "block";
-    ensureRSIChart(); // RSI chart created ONLY now
-  } else {
-    rsiChartDiv.style.display = "none";
-  }
+    if (rsiToggle.checked) {
+        rsiChartDiv.style.display = "block";
+        ensureRSIChart(); // RSI chart created ONLY now
+    } else {
+        rsiChartDiv.style.display = "none";
+    }
 };
 
 // default
 rsiChartDiv.style.display = "none";
 
+vwapToggle.onchange = () => {
+    vwapSeries.applyOptions({ visible: vwapToggle.checked });
+};
+
+macdToggle.onchange = () => {
+    if (macdToggle.checked) {
+        macdChartDiv.style.display = "block";
+        ensureMACDChart();
+    } else {
+        macdChartDiv.style.display = "none";
+    }
+};
+
+macdChartDiv.style.display = "none";
 
 
