@@ -1,9 +1,12 @@
+import { initChart } from "./chart.js";
+import { updateCandle } from "./candles.js";
 import { state, saveState, loadState } from "./state.js";
 import { buyAtMarket, sellAtMarket } from "./trading.js";
 
 
 // restore saved state
 loadState();
+initChart();
 
 // UI references
 const priceDiv = document.getElementById("price");
@@ -64,6 +67,7 @@ const ws = new WebSocket(
 ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
     state.price = Number(data.p);
+    updateCandle(state.price);
     render();
 };
 

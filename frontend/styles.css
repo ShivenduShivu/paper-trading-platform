@@ -18,3 +18,10 @@ button {
   padding: 10px;
   font-size: 16px;
 }
+#history {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #1e222d;
+  padding: 8px;
+  font-size: 14px;
+}
