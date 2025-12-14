@@ -1,5 +1,6 @@
 import { state, saveState, loadState } from "./state.js";
-import { buyAtMarket } from "./trading.js";
+import { buyAtMarket, sellAtMarket } from "./trading.js";
+
 
 // restore saved state
 loadState();
@@ -8,6 +9,8 @@ loadState();
 const priceDiv = document.getElementById("price");
 const balanceDiv = document.getElementById("balance");
 const buyBtn = document.getElementById("buy");
+const sellBtn = document.getElementById("sell");
+
 
 // update UI
 const positionDiv = document.getElementById("position");
@@ -50,6 +53,13 @@ buyBtn.onclick = () => {
   saveState();
   render();
 };
+// SELL BUTTON
+sellBtn.onclick = () => {
+  sellAtMarket();
+  saveState();
+  render();
+};
+
 
 // service worker
 if ("serviceWorker" in navigator) {

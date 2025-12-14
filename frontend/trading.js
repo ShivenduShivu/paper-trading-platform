@@ -22,3 +22,18 @@ export function buyAtMarket() {
 
   state.balance = 0;
 }
+
+export function sellAtMarket() {
+  if (!state.position) {
+    alert("No open position to sell");
+    return;
+  }
+
+  const price = state.price;
+
+  const finalValue =
+    state.position.quantity * price;
+
+  state.balance = finalValue;
+  state.position = null;
+}
