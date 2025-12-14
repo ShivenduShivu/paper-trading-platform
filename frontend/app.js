@@ -1,37 +1,59 @@
-import { ensureRSIChart } from "./rsi.js";
-import { ema9Series, ema21Series } from "./chart.js";
+// ===============================
+// INDICATOR SYSTEM
+// ===============================
+import {
+    registerIndicator,
+    initIndicators,
+    updateIndicators,
+    toggleIndicator
+} from "./indicators/index.js";
+
+import { EMAIndicator } from "./indicators/ema.js";
+import { RSIIndicator } from "./indicators/rsi.js";
+import { MACDIndicator } from "./indicators/macd.js";
+import { VWAPIndicator } from "./indicators/vwap.js";
+
+// ===============================
+// CORE APP IMPORTS
+// ===============================
 import { initChart } from "./chart.js";
 import { updateCandle } from "./candles.js";
 import { state, saveState, loadState } from "./state.js";
 import { buyAtMarket, sellAtMarket } from "./trading.js";
-import { vwapSeries } from "./chart.js";
-import { ensureMACDChart, updateMACD } from "./macd.js";
 
-
-
-// restore saved state
+// ===============================
+// INIT APP
+// ===============================
 loadState();
 initChart();
 
-// UI references
+// register indicators
+registerIndicator("ema", EMAIndicator());
+registerIndicator("rsi", RSIIndicator());
+registerIndicator("macd", MACDIndicator());
+registerIndicator("vwap", VWAPIndicator());
+
+initIndicators();
+
+// ===============================
+// UI REFERENCES
+// ===============================
 const priceDiv = document.getElementById("price");
 const balanceDiv = document.getElementById("balance");
+const positionDiv = document.getElementById("position");
+const historyDiv = document.getElementById("history");
+
 const buyBtn = document.getElementById("buy");
 const sellBtn = document.getElementById("sell");
-const historyDiv = document.getElementById("history");
+
 const emaToggle = document.getElementById("emaToggle");
 const rsiToggle = document.getElementById("rsiToggle");
-const rsiChartDiv = document.getElementById("rsiChart");
-const vwapToggle = document.getElementById("vwapToggle");
 const macdToggle = document.getElementById("macdToggle");
-const macdChartDiv = document.getElementById("macdChart");
+const vwapToggle = document.getElementById("vwapToggle");
 
-
-
-
-// update UI
-const positionDiv = document.getElementById("position");
-
+// ===============================
+// RENDER FUNCTION
+// ===============================
 function render() {
     balanceDiv.innerText = `Balance: $${state.balance.toFixed(2)}`;
     priceDiv.innerText = `Price: $${state.price}`;
@@ -42,42 +64,39 @@ function render() {
             state.position.quantity;
 
         positionDiv.innerText =
-            `Position: BTC\nEntry: $${state.position.entryPrice}\nPnL: $${pnl.toFixed(2)}`;
+            `Position: BTC
+Entry: $${state.position.entryPrice}
+PnL: $${pnl.toFixed(2)}`;
     } else {
         positionDiv.innerText = "No open position";
     }
-    // Render trade history
-    historyDiv.innerHTML = "";
 
+    historyDiv.innerHTML = "";
     state.tradeHistory.forEach((trade, index) => {
         const row = document.createElement("div");
-
         row.innerText =
             `#${index + 1}
-            Entry: $${trade.entryPrice}
-            Exit: $${trade.exitPrice}
-            PnL: $${trade.pnl}
-            Opened: ${trade.openTime}
-            Closed: ${trade.closeTime}`;
-
-
+Entry: $${trade.entryPrice}
+Exit: $${trade.exitPrice}
+PnL: $${trade.pnl}
+Opened: ${trade.openTime}
+Closed: ${trade.closeTime}`;
         historyDiv.appendChild(row);
     });
-
 }
-
 
 render();
 
-/* ===============================
-   LIVE PRICE (BINANCE WEBSOCKET)
-================================ */
+// ===============================
+// LIVE PRICE FEED (BINANCE)
+// ===============================
 const ws = new WebSocket(
     "wss://stream.binance.com:9443/ws/btcusdt@trade"
 );
 
 ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
+
     const price = Number(data.p);
     const volume = Number(data.q || 1);
 
@@ -87,66 +106,45 @@ ws.onmessage = (event) => {
     const now = Math.floor(Date.now() / 1000);
     const candleTime = now - (now % 60);
 
-    if (macdToggle.checked) {
-        updateMACD(price, candleTime);
-    }
+    // 🔑 SINGLE ENTRY POINT FOR ALL INDICATORS
+    updateIndicators(price, candleTime, volume);
 
     render();
 };
 
-
-// BUY BUTTON
+// ===============================
+// TRADING ACTIONS
+// ===============================
 buyBtn.onclick = () => {
     buyAtMarket();
     saveState();
     render();
 };
-// SELL BUTTON
+
 sellBtn.onclick = () => {
     sellAtMarket();
     saveState();
     render();
 };
 
+// ===============================
+// INDICATOR TOGGLES (CLEAN)
+// ===============================
+emaToggle.onchange = () =>
+    toggleIndicator("ema", emaToggle.checked);
 
-// service worker
+rsiToggle.onchange = () =>
+    toggleIndicator("rsi", rsiToggle.checked);
+
+macdToggle.onchange = () =>
+    toggleIndicator("macd", macdToggle.checked);
+
+vwapToggle.onchange = () =>
+    toggleIndicator("vwap", vwapToggle.checked);
+
+// ===============================
+// SERVICE WORKER
+// ===============================
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js");
 }
-
-// EMA toggle
-emaToggle.onchange = () => {
-    const visible = emaToggle.checked;
-    ema9Series.applyOptions({ visible });
-    ema21Series.applyOptions({ visible });
-};
-
-// RSI toggle
-rsiToggle.onchange = () => {
-    if (rsiToggle.checked) {
-        rsiChartDiv.style.display = "block";
-        ensureRSIChart(); // RSI chart created ONLY now
-    } else {
-        rsiChartDiv.style.display = "none";
-    }
-};
-
-// default
-rsiChartDiv.style.display = "none";
-
-vwapToggle.onchange = () => {
-    vwapSeries.applyOptions({ visible: vwapToggle.checked });
-};
-
-macdToggle.onchange = () => {
-    if (macdToggle.checked) {
-        macdChartDiv.style.display = "block";
-        ensureMACDChart();
-    } else {
-        macdChartDiv.style.display = "none";
-    }
-};
-
-macdChartDiv.style.display = "none";
-
-
