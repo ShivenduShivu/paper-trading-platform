@@ -70,12 +70,13 @@ function render() {
         Entry: $${pos.entryPrice} |
         Qty: ${pos.quantity.toFixed(4)} |
         PnL: $${pnl.toFixed(2)}
-        <button data-id="${pos.id}">SELL</button>
+        <button>SELL</button>
       </div>
     `;
 
     row.querySelector("button").onclick = () => {
-      sellPosition(pos.id);
+      // 🔑 PASS PRICE EXPLICITLY (FIXES SLOW SELL)
+      sellPosition(pos.id, state.price);
       saveState();
       render();
     };
@@ -101,17 +102,14 @@ Closed: ${trade.closeTime}`;
 render();
 
 // ===============================
-// LIVE PRICE FEED (BINANCE)
+// LIVE PRICE FEED (BACKEND)
 // ===============================
-const ws = new WebSocket(
-  "wss://stream.binance.com:9443/ws/btcusdt@trade"
-);
+const ws = new WebSocket("ws://localhost:8080");
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
-
-  const price = Number(data.p);
-  const volume = Number(data.q || 1);
+  const price = data.price;
+  const volume = data.volume;
 
   state.price = price;
   updateCandle(price, volume);
@@ -119,9 +117,7 @@ ws.onmessage = (event) => {
   const now = Math.floor(Date.now() / 1000);
   const candleTime = now - (now % 60);
 
-  // 🔑 unified indicator update
   updateIndicators(price, candleTime, volume);
-
   render();
 };
 
