@@ -1,9 +1,10 @@
 export const state = {
   balance: 10000,
-  position: null,
+  positions: [],
   price: 0,
   tradeHistory: []
 };
+
 
 
 export function saveState() {

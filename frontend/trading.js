@@ -1,54 +1,49 @@
 import { state } from "./state.js";
 
 export function buyAtMarket() {
-    if (state.position) {
-        alert("Position already open");
+    if (state.balance <= 0) {
+        alert("No balance left");
         return;
     }
 
     const price = state.price;
+    const allocation = state.balance * 0.25; // 25% per trade
+    const quantity = allocation / price;
 
-    if (!price) {
-        alert("Price not available yet");
-        return;
-    }
-
-    const quantity = state.balance / price;
-
-    state.position = {
+    state.positions.push({
+        id: Date.now().toString(),
         entryPrice: price,
         quantity,
         openTime: new Date().toLocaleString()
-    };
+    });
 
-    state.balance = 0;
+    state.balance -= allocation;
 }
 
-export function sellAtMarket() {
-    if (!state.position) {
-        alert("No open position to sell");
-        return;
-    }
 
-    const price = state.price;
+export function sellPosition(positionId) {
+    const index = state.positions.findIndex(
+        p => p.id === positionId
+    );
 
-    const finalValue =
-        state.position.quantity * price;
+    if (index === -1) return;
 
+    const position = state.positions[index];
+    const exitPrice = state.price;
+    const value = position.quantity * exitPrice;
     const pnl =
-        (price - state.position.entryPrice) *
-        state.position.quantity;
+        (exitPrice - position.entryPrice) * position.quantity;
+
+    state.balance += value;
 
     state.tradeHistory.push({
-        entryPrice: state.position.entryPrice,
-        exitPrice: price,
-        quantity: state.position.quantity,
+        entryPrice: position.entryPrice,
+        exitPrice,
+        quantity: position.quantity,
         pnl: Number(pnl.toFixed(2)),
-        openTime: state.position.openTime,
+        openTime: position.openTime,
         closeTime: new Date().toLocaleString()
     });
 
-    state.balance = finalValue;
-    state.position = null;
-
+    state.positions.splice(index, 1);
 }

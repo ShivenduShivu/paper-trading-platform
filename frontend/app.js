@@ -2,10 +2,10 @@
 // INDICATOR SYSTEM
 // ===============================
 import {
-    registerIndicator,
-    initIndicators,
-    updateIndicators,
-    toggleIndicator
+  registerIndicator,
+  initIndicators,
+  updateIndicators,
+  toggleIndicator
 } from "./indicators/index.js";
 
 import { EMAIndicator } from "./indicators/ema.js";
@@ -19,7 +19,7 @@ import { VWAPIndicator } from "./indicators/vwap.js";
 import { initChart } from "./chart.js";
 import { updateCandle } from "./candles.js";
 import { state, saveState, loadState } from "./state.js";
-import { buyAtMarket, sellAtMarket } from "./trading.js";
+import { buyAtMarket, sellPosition } from "./trading.js";
 
 // ===============================
 // INIT APP
@@ -40,11 +40,10 @@ initIndicators();
 // ===============================
 const priceDiv = document.getElementById("price");
 const balanceDiv = document.getElementById("balance");
-const positionDiv = document.getElementById("position");
+const positionsDiv = document.getElementById("positions");
 const historyDiv = document.getElementById("history");
 
 const buyBtn = document.getElementById("buy");
-const sellBtn = document.getElementById("sell");
 
 const emaToggle = document.getElementById("emaToggle");
 const rsiToggle = document.getElementById("rsiToggle");
@@ -55,34 +54,48 @@ const vwapToggle = document.getElementById("vwapToggle");
 // RENDER FUNCTION
 // ===============================
 function render() {
-    balanceDiv.innerText = `Balance: $${state.balance.toFixed(2)}`;
-    priceDiv.innerText = `Price: $${state.price}`;
+  balanceDiv.innerText = `Balance: $${state.balance.toFixed(2)}`;
+  priceDiv.innerText = `Price: $${state.price}`;
 
-    if (state.position) {
-        const pnl =
-            (state.price - state.position.entryPrice) *
-            state.position.quantity;
+  // ----- OPEN POSITIONS -----
+  positionsDiv.innerHTML = "";
 
-        positionDiv.innerText =
-            `Position: BTC
-Entry: $${state.position.entryPrice}
-PnL: $${pnl.toFixed(2)}`;
-    } else {
-        positionDiv.innerText = "No open position";
-    }
+  state.positions.forEach(pos => {
+    const pnl =
+      (state.price - pos.entryPrice) * pos.quantity;
 
-    historyDiv.innerHTML = "";
-    state.tradeHistory.forEach((trade, index) => {
-        const row = document.createElement("div");
-        row.innerText =
-            `#${index + 1}
+    const row = document.createElement("div");
+    row.innerHTML = `
+      <div>
+        Entry: $${pos.entryPrice} |
+        Qty: ${pos.quantity.toFixed(4)} |
+        PnL: $${pnl.toFixed(2)}
+        <button data-id="${pos.id}">SELL</button>
+      </div>
+    `;
+
+    row.querySelector("button").onclick = () => {
+      sellPosition(pos.id);
+      saveState();
+      render();
+    };
+
+    positionsDiv.appendChild(row);
+  });
+
+  // ----- TRADE HISTORY -----
+  historyDiv.innerHTML = "";
+  state.tradeHistory.forEach((trade, index) => {
+    const row = document.createElement("div");
+    row.innerText =
+      `#${index + 1}
 Entry: $${trade.entryPrice}
 Exit: $${trade.exitPrice}
 PnL: $${trade.pnl}
 Opened: ${trade.openTime}
 Closed: ${trade.closeTime}`;
-        historyDiv.appendChild(row);
-    });
+    historyDiv.appendChild(row);
+  });
 }
 
 render();
@@ -91,60 +104,54 @@ render();
 // LIVE PRICE FEED (BINANCE)
 // ===============================
 const ws = new WebSocket(
-    "wss://stream.binance.com:9443/ws/btcusdt@trade"
+  "wss://stream.binance.com:9443/ws/btcusdt@trade"
 );
 
 ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+  const data = JSON.parse(event.data);
 
-    const price = Number(data.p);
-    const volume = Number(data.q || 1);
+  const price = Number(data.p);
+  const volume = Number(data.q || 1);
 
-    state.price = price;
-    updateCandle(price, volume);
+  state.price = price;
+  updateCandle(price, volume);
 
-    const now = Math.floor(Date.now() / 1000);
-    const candleTime = now - (now % 60);
+  const now = Math.floor(Date.now() / 1000);
+  const candleTime = now - (now % 60);
 
-    // 🔑 SINGLE ENTRY POINT FOR ALL INDICATORS
-    updateIndicators(price, candleTime, volume);
+  // 🔑 unified indicator update
+  updateIndicators(price, candleTime, volume);
 
-    render();
+  render();
 };
 
 // ===============================
 // TRADING ACTIONS
 // ===============================
 buyBtn.onclick = () => {
-    buyAtMarket();
-    saveState();
-    render();
-};
-
-sellBtn.onclick = () => {
-    sellAtMarket();
-    saveState();
-    render();
+  buyAtMarket();
+  saveState();
+  render();
 };
 
 // ===============================
-// INDICATOR TOGGLES (CLEAN)
+// INDICATOR TOGGLES
 // ===============================
 emaToggle.onchange = () =>
-    toggleIndicator("ema", emaToggle.checked);
+  toggleIndicator("ema", emaToggle.checked);
 
 rsiToggle.onchange = () =>
-    toggleIndicator("rsi", rsiToggle.checked);
+  toggleIndicator("rsi", rsiToggle.checked);
 
 macdToggle.onchange = () =>
-    toggleIndicator("macd", macdToggle.checked);
+  toggleIndicator("macd", macdToggle.checked);
 
 vwapToggle.onchange = () =>
-    toggleIndicator("vwap", vwapToggle.checked);
+  toggleIndicator("vwap", vwapToggle.checked);
 
 // ===============================
 // SERVICE WORKER
 // ===============================
 if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js");
+  navigator.serviceWorker.register("service-worker.js");
 }
