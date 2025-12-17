@@ -7,3 +7,6 @@
 - Added real-time PnL calculation
 - Implemented localStorage persistence
 - Verified reload safety
+
+### Checkpoint-2: 
+
