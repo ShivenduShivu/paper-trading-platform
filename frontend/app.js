@@ -19,7 +19,6 @@ import { VWAPIndicator } from "./indicators/vwap.js";
 import { initChart } from "./chart.js";
 import { updateCandle } from "./candles.js";
 import { state, saveState, loadState } from "./state.js";
-import { buyAtMarket, sellPosition } from "./trading.js";
 
 // ===============================
 // INIT APP
@@ -76,7 +75,10 @@ function render() {
 
     row.querySelector("button").onclick = () => {
       // 🔑 PASS PRICE EXPLICITLY (FIXES SLOW SELL)
-      sellPosition(pos.id, state.price);
+      ws.send(JSON.stringify({
+        type: "SELL",
+        positionId: pos.id
+      }));
       saveState();
       render();
     };
@@ -108,24 +110,38 @@ const ws = new WebSocket("ws://localhost:8080");
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
-  const price = data.price;
-  const volume = data.volume;
 
-  state.price = price;
-  updateCandle(price, volume);
+  // ✅ ACCOUNT STATE UPDATE (FIRST)
+  if (data.type === "ACCOUNT_UPDATE") {
+    state.balance = data.account.balance;
+    state.positions = data.account.positions;
+    state.tradeHistory = data.account.tradeHistory;
+    render();
+    return;
+  }
 
-  const now = Math.floor(Date.now() / 1000);
-  const candleTime = now - (now % 60);
+  // ✅ PRICE UPDATE
+  if (data.type === "PRICE") {
+    const price = data.price;
+    const volume = data.volume;
 
-  updateIndicators(price, candleTime, volume);
-  render();
+    state.price = price;
+    updateCandle(price, volume);
+
+    const now = Math.floor(Date.now() / 1000);
+    const candleTime = now - (now % 60);
+
+    updateIndicators(price, candleTime, volume);
+    render();
+  }
 };
+
 
 // ===============================
 // TRADING ACTIONS
 // ===============================
 buyBtn.onclick = () => {
-  buyAtMarket();
+  ws.send(JSON.stringify({ type: "BUY" }));
   saveState();
   render();
 };
