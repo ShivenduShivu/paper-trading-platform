@@ -12,12 +12,12 @@
 
 ```
 ---
-![Status](https://img.shields.io/badge/STATUS-ACTIVE-brightgreen?style=for-the-badge)
-![Checkpoint](https://img.shields.io/badge/CHECKPOINT-11-blue?style=for-the-badge)
-![Backend](https://img.shields.io/badge/BACKEND-NODE.JS-green?style=for-the-badge&logo=node.js)
-![Realtime](https://img.shields.io/badge/REALTIME-WEBSOCKET-orange?style=for-the-badge)
-![Frontend](https://img.shields.io/badge/FRONTEND-VANILLA_JS-yellow?style=for-the-badge)
-![License](https://img.shields.io/badge/LICENSE-MIT-lightgrey?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-active-brightgreen)
+![Checkpoint](https://img.shields.io/badge/checkpoint-11-blue)
+![Node.js](https://img.shields.io/badge/backend-Node.js-green)
+![WebSocket](https://img.shields.io/badge/realtime-WebSocket-orange)
+![Frontend](https://img.shields.io/badge/frontend-Vanilla_JS-yellow)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 ---
 > 🧠 **An educational, real-time paper trading platform built to understand how professional trading systems actually work — not just how charts look.**
@@ -247,5 +247,6 @@ That mindset is the real learning outcome.
 
 ⭐ If you find this project useful, feel free to **star** it or **fork** it.  
 📚 Built for learning. Designed like production.
+
 
 
