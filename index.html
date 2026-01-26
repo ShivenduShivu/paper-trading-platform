@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Paper Trading</title>
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+  <div id="app">
+    <h1>Paper Trading Platform</h1>
+
+    <div id="balance">Balance: $10,000</div>
+    <div id="price">Price: --</div>
+    <div class="controls">
+      <button id="buy">BUY</button>
+      <button id="sell">SELL</button>
+    </div>
+    <div id="position"></div>
+    <h3>Open Positions</h3>
+    <div id="positions"></div>
+    <div class="indicator-controls">
+    <label>
+        <input type="checkbox" id="emaToggle" checked />
+        EMA (9, 21)
+    </label>
+
+    <label>
+        <input type="checkbox" id="rsiToggle" />
+        RSI (14)
+    </label>
+    <label>
+        <input type="checkbox" id="vwapToggle" />
+        VWAP
+    </label>
+
+    <label>
+        <input type="checkbox" id="macdToggle" />
+        MACD
+    </label>
+    </div>
+
+    <div id="chart" style="height:300px;"></div>
+    <div id="rsiChart" style="height:150px;"></div>
+    <div id="macdChart" style="height:150px;"></div>
+
+
+
+    
+    <h3>Trade History</h3>
+    <div id="history"></div>
+
+  </div>
+
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <script type="module" src="app.js"></script>
+
+</body>
+</html>
